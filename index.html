@@ -187,16 +187,30 @@
     color:var(--muted);
   }
   .progress-track{
-    height:8px;
+    height:10px;
     background:var(--surface-2);
     border-radius:100px;
     overflow:hidden;
   }
   .progress-fill{
     height:100%;
+    width:0%;
     background:linear-gradient(90deg, var(--gold), var(--emerald));
     border-radius:100px;
-    transition:width .6s ease;
+    transition:width 1.1s cubic-bezier(.22,.9,.3,1);
+    position:relative;
+    overflow:hidden;
+  }
+  .progress-fill::after{
+    content:'';
+    position:absolute; top:0; left:-60%;
+    width:40%; height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: progress-shine 2.2s ease-in-out infinite;
+  }
+  @keyframes progress-shine{
+    0%{ left:-60%; }
+    100%{ left:130%; }
   }
   .progress-label{
     margin-top:8px;
@@ -205,24 +219,88 @@
   }
 
   /* Rewards list */
+  /* Points wallet */
+  .points-total{
+    font-family:'Fraunces', serif;
+    font-size:2.4rem;
+    color:var(--gold);
+    display:flex; align-items:baseline; gap:8px;
+  }
+  .points-label{
+    font-family:'Inter', sans-serif;
+    font-size:1rem;
+    color:var(--muted);
+    font-weight:500;
+  }
+  .points-hint{
+    margin-top:10px;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+
   .reward-row{
     display:flex; align-items:center; gap:14px;
-    padding:14px 0;
+    padding:16px 14px;
+    margin:0 -14px;
     border-bottom:1px solid var(--line);
+    border-radius:12px;
+    transition:background .3s ease, box-shadow .3s ease;
   }
   .reward-row:last-child{ border-bottom:none; }
+  .reward-info{ flex:1; min-width:0; }
   .reward-icon{
     width:36px; height:36px; flex-shrink:0;
     border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     font-size:1.1rem;
   }
-  .reward-row.unlocked .reward-icon{ background:var(--gold-soft); }
+  .reward-row.claimed .reward-icon{ background:var(--emerald-soft); }
+  .reward-row.claimable .reward-icon{ background:var(--gold-soft); }
   .reward-row.locked .reward-icon{ background:var(--surface-2); filter:grayscale(1); opacity:0.5; }
   .reward-name{ font-weight:600; font-size:0.92rem; }
   .reward-row.locked .reward-name{ color:var(--muted); }
   .reward-desc{ font-size:0.8rem; color:var(--muted); }
-  .reward-check{ margin-left:auto; color:var(--emerald); font-size:0.85rem; font-weight:600; }
+  .reward-check{ margin-left:auto; color:var(--emerald); font-size:0.85rem; font-weight:600; flex-shrink:0; }
+  .reward-missing{ margin-left:auto; color:var(--muted); font-size:0.78rem; flex-shrink:0; white-space:nowrap; }
+
+  /* Palier "lumineux" = accessible dès maintenant */
+  .reward-row.claimable{
+    background:rgba(201,161,93,0.07);
+    box-shadow:0 0 0 1px rgba(201,161,93,0.3), 0 0 22px -4px rgba(201,161,93,0.35);
+    animation: reward-pulse-glow 2.2s ease-in-out infinite;
+  }
+  @keyframes reward-pulse-glow{
+    0%,100%{ box-shadow:0 0 0 1px rgba(201,161,93,0.3), 0 0 14px -6px rgba(201,161,93,0.3); }
+    50%{ box-shadow:0 0 0 1px rgba(201,161,93,0.55), 0 0 26px -4px rgba(201,161,93,0.55); }
+  }
+  .claim-btn{
+    margin-left:auto;
+    flex-shrink:0;
+    background:var(--gold);
+    color:var(--ink);
+    border:none;
+    border-radius:100px;
+    padding:9px 20px;
+    font-weight:700;
+    font-size:0.82rem;
+    cursor:pointer;
+    font-family:inherit;
+    transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+  }
+  .claim-btn:hover:not(:disabled){
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px -10px rgba(201,161,93,0.6);
+  }
+  .claim-btn:disabled{ opacity:0.6; cursor:not-allowed; }
+
+  @media (prefers-reduced-motion: reduce){
+    .reward-row.claimable{ animation:none; }
+  }
+
+  @media (max-width:560px){
+    .reward-row{ flex-wrap:wrap; }
+    .claim-btn, .reward-check, .reward-missing{ margin-left:50px; }
+  }
 
   /* Invested amount */
   .invested-current{
@@ -293,6 +371,70 @@
     .auth-box{ padding:30px 24px; }
     .card{ padding:22px 18px; }
   }
+
+  /* ---- Animations générales ---- */
+  @keyframes card-in{
+    from{ opacity:0; transform:translateY(16px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .card, .auth-box{
+    animation: card-in .55s ease both;
+  }
+  .card:nth-of-type(1){ animation-delay:.05s; }
+  .card:nth-of-type(2){ animation-delay:.15s; }
+  .card:nth-of-type(3){ animation-delay:.25s; }
+  .card:nth-of-type(4){ animation-delay:.35s; }
+  .card:nth-of-type(5){ animation-delay:.45s; }
+
+  .hello, .sub{
+    animation: card-in .5s ease both;
+  }
+
+  .card{
+    transition:transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    border-color:rgba(201,161,93,0.3);
+    box-shadow:0 16px 36px -24px rgba(201,161,93,0.35);
+  }
+
+  .btn-primary, .btn-copy, .invested-form button{
+    transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+  }
+  .btn-primary:hover:not(:disabled), .btn-copy:hover, .invested-form button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 24px -12px rgba(201,161,93,0.5);
+  }
+  .btn-primary:active:not(:disabled), .btn-copy:active, .invested-form button:active{
+    transform:translateY(0);
+  }
+
+  .level-badge{
+    display:inline-block;
+    animation: badge-pop .6s cubic-bezier(.34,1.56,.64,1) both;
+    animation-delay:.3s;
+  }
+  @keyframes badge-pop{
+    from{ transform:scale(0.4); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+
+  .field input, .invested-form input{
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .field input:focus, .invested-form input:focus{
+    outline:none;
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,161,93,0.15);
+  }
+
+  .auth-tab{ transition:background .25s ease, color .25s ease; }
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .auth-box, .hello, .sub, .level-badge{ animation:none !important; }
+    .progress-fill::after{ animation:none !important; }
+  }
 </style>
 </head>
 <body>
@@ -324,341 +466,4 @@ try{
     <strong>Erreur : la librairie Supabase ne s'est pas chargée.</strong><br><br>
     ${err.message || String(err)}
     <br><br>
-    <span style="color:var(--muted); font-size:0.85rem;">Vérifie ta connexion et recharge la page. Si ça persiste, envoie ce message.</span>
-  </div>`;
-  throw err;
-}
-
-const LEVELS = [
-  { name: 'Bronze', icon: '🥉', points: 10, reward: 'Badge Bronze + accès au canal "Parrains"' },
-  { name: 'Argent', icon: '🥈', points: 30, reward: '-25% sur ton abonnement du mois suivant' },
-  { name: 'Or', icon: '🥇', points: 60, reward: "1 mois d'abonnement offert" },
-  { name: 'Platine', icon: '💎', points: 120, reward: '2 mois offerts + appel privé stratégie' },
-  { name: 'Légende', icon: '👑', points: 250, reward: 'Abonnement à vie + statut Ambassadeur WK' }
-];
-
-const app = document.getElementById('app');
-const logoutBtn = document.getElementById('logoutBtn');
-const toastEl = document.getElementById('toast');
-
-function showToast(msg){
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 2200);
-}
-
-function getRefCodeFromURL(){
-  const params = new URLSearchParams(window.location.search);
-  return params.get('ref');
-}
-
-function getReferralLink(code){
-  const url = new URL(window.location.href);
-  url.search = '';
-  url.searchParams.set('ref', code);
-  return url.toString();
-}
-
-function currentLevel(points){
-  let level = null;
-  for(const l of LEVELS){
-    if(points >= l.points) level = l;
-  }
-  return level;
-}
-
-function nextLevel(points){
-  return LEVELS.find(l => points < l.points) || null;
-}
-
-// ---------- AUTH SCREEN ----------
-function renderAuth(){
-  const refCode = getRefCodeFromURL();
-  app.innerHTML = `
-    <div class="auth-box">
-      <div class="auth-tabs">
-        <div class="auth-tab active" data-tab="login">Connexion</div>
-        <div class="auth-tab" data-tab="signup">Créer un compte</div>
-      </div>
-      ${refCode ? `<div class="ref-note" id="refNote">🎁 Tu as été invité avec le code <strong>${refCode}</strong>. Il sera appliqué à ton inscription.</div>` : ''}
-      <div id="authForm"></div>
-    </div>
-  `;
-
-  const tabs = app.querySelectorAll('.auth-tab');
-  let mode = 'login';
-
-  function renderForm(){
-    const refNote = document.getElementById('refNote');
-    if(refNote) refNote.style.display = mode === 'signup' ? 'block' : 'none';
-
-    const formEl = document.getElementById('authForm');
-    if(mode === 'login'){
-      formEl.innerHTML = `
-        <div class="field"><label>Email</label><input type="email" id="loginEmail" /></div>
-        <div class="field"><label>Mot de passe</label><input type="password" id="loginPassword" /></div>
-        <button class="btn-primary" id="loginBtn">Se connecter</button>
-        <div id="authMsg"></div>
-      `;
-      document.getElementById('loginBtn').onclick = handleLogin;
-    } else {
-      formEl.innerHTML = `
-        <div class="field"><label>Nom complet</label><input type="text" id="signupName" /></div>
-        <div class="field"><label>Email</label><input type="email" id="signupEmail" /></div>
-        <div class="field"><label>Mot de passe (6 caractères min.)</label><input type="password" id="signupPassword" /></div>
-        <button class="btn-primary" id="signupBtn">Créer mon compte</button>
-        <div id="authMsg"></div>
-      `;
-      document.getElementById('signupBtn').onclick = handleSignup;
-    }
-  }
-
-  tabs.forEach(tab => {
-    tab.onclick = () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      mode = tab.dataset.tab;
-      renderForm();
-    };
-  });
-
-  renderForm();
-}
-
-async function handleLogin(){
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const btn = document.getElementById('loginBtn');
-  const msg = document.getElementById('authMsg');
-  btn.disabled = true;
-  msg.innerHTML = '';
-
-  const { error } = await supa.auth.signInWithPassword({ email, password });
-  if(error){
-    msg.innerHTML = `<div class="auth-error">${translateError(error.message)}</div>`;
-    btn.disabled = false;
-  } else {
-    loadDashboard();
-  }
-}
-
-async function handleSignup(){
-  const full_name = document.getElementById('signupName').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
-  const btn = document.getElementById('signupBtn');
-  const msg = document.getElementById('authMsg');
-  const refCode = getRefCodeFromURL();
-
-  if(!full_name || !email || password.length < 6){
-    msg.innerHTML = `<div class="auth-error">Merci de remplir tous les champs (mot de passe 6 caractères min.)</div>`;
-    return;
-  }
-
-  btn.disabled = true;
-  msg.innerHTML = '';
-
-  const { error } = await supa.auth.signUp({
-    email, password,
-    options: {
-      data: { full_name, referred_by_code: refCode || null }
-    }
-  });
-
-  if(error){
-    msg.innerHTML = `<div class="auth-error">${translateError(error.message)}</div>`;
-    btn.disabled = false;
-  } else {
-    msg.innerHTML = `<div class="auth-msg">Compte créé ! Tu peux maintenant te connecter.</div>`;
-    btn.disabled = false;
-  }
-}
-
-function translateError(msg){
-  if(msg.includes('Invalid login credentials')) return 'Email ou mot de passe incorrect.';
-  if(msg.includes('already registered')) return 'Un compte existe déjà avec cet email.';
-  if(msg.includes('Password should be')) return 'Le mot de passe doit faire au moins 6 caractères.';
-  return msg;
-}
-
-// ---------- DASHBOARD ----------
-async function loadDashboard(){
-  app.innerHTML = `<div class="loading">Chargement de ton espace…</div>`;
-  logoutBtn.style.display = 'inline-block';
-
-  const { data: { user } } = await supa.auth.getUser();
-  if(!user){ renderAuth(); logoutBtn.style.display = 'none'; return; }
-
-  const { data: profile, error: profileErr } = await supa
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if(profileErr || !profile){
-    app.innerHTML = `<div class="loading">Erreur de chargement du profil. Réessaie de te reconnecter.</div>`;
-    return;
-  }
-
-  const { data: pointsRow } = await supa
-    .from('referral_points')
-    .select('points')
-    .eq('user_id', user.id)
-    .single();
-  const points = pointsRow?.points || 0;
-
-  const { data: filleuls } = await supa
-    .from('profiles')
-    .select('full_name, invested_amount, created_at')
-    .eq('referred_by', user.id)
-    .order('created_at', { ascending: false });
-
-  renderDashboard(profile, points, filleuls || []);
-}
-
-function pointsForAmount(amount){
-  if(amount >= 5000) return 50;
-  if(amount >= 2500) return 30;
-  if(amount >= 1000) return 20;
-  if(amount >= 500) return 10;
-  return 0;
-}
-
-function renderDashboard(profile, points, filleuls){
-  const level = currentLevel(points);
-  const next = nextLevel(points);
-  const prevThreshold = level ? level.points : 0;
-  const nextThreshold = next ? next.points : (level ? level.points : LEVELS[0].points);
-  const progressPct = next
-    ? Math.min(100, Math.round(((points - prevThreshold) / (nextThreshold - prevThreshold)) * 100))
-    : 100;
-
-  const refLink = getReferralLink(profile.referral_code);
-
-  app.innerHTML = `
-    <h2 class="hello">Bonjour <span>${escapeHtml(profile.full_name)}</span> 👋</h2>
-    <p class="sub">Voici ton espace de parrainage WK Académie.</p>
-
-    <div class="card">
-      <h3>Ton lien de parrainage</h3>
-      <div class="ref-link-box">
-        <input class="ref-link-input" id="refLinkInput" readonly value="${refLink}" />
-        <button class="btn-copy" id="copyBtn">Copier</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Ton niveau</h3>
-      <div class="level-row">
-        <div class="level-badge">${level ? level.icon : '🔹'}</div>
-        <div>
-          <div class="level-name">${level ? level.name : 'Aucun niveau atteint'}</div>
-          <div class="level-points">${points} points</div>
-        </div>
-      </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%;"></div></div>
-      <div class="progress-label">
-        ${next ? `${points} / ${next.points} points pour atteindre ${next.name} ${next.icon}` : 'Niveau maximum atteint 🎉'}
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Récompenses par niveau</h3>
-      ${LEVELS.map(l => `
-        <div class="reward-row ${points >= l.points ? 'unlocked' : 'locked'}">
-          <div class="reward-icon">${l.icon}</div>
-          <div>
-            <div class="reward-name">${l.name} — ${l.points} points</div>
-            <div class="reward-desc">${l.reward}</div>
-          </div>
-          ${points >= l.points ? '<div class="reward-check">Débloqué ✓</div>' : ''}
-        </div>
-      `).join('')}
-    </div>
-
-    <div class="card">
-      <h3>Ton montant investi</h3>
-      <div class="invested-current">${profile.invested_amount > 0 ? profile.invested_amount.toLocaleString('fr-FR') + ' €' : 'Non renseigné'}</div>
-      <div class="invested-note">Ce montant sert à calculer les points que tu rapportes à la personne qui t'a parrainé. Minimum 500 €.</div>
-      <div class="invested-form">
-        <input type="number" id="investedInput" min="500" step="50" placeholder="Ex: 1000" />
-        <button id="investedBtn">Mettre à jour</button>
-      </div>
-      <div id="investedMsg"></div>
-    </div>
-
-    <div class="card">
-      <h3>Tes filleuls (${filleuls.length})</h3>
-      ${filleuls.length === 0
-        ? "<div class=\"empty-state\">Personne parrainé pour l'instant. Partage ton lien pour commencer à gagner des points !</div>"
-        : filleuls.map(f => `
-          <div class="filleul-row">
-            <span>${escapeHtml(f.full_name)}</span>
-            <span class="filleul-points">${f.invested_amount > 0 ? '+' + pointsForAmount(f.invested_amount) + ' pts' : 'En attente'}</span>
-          </div>
-        `).join('')
-      }
-    </div>
-  `;
-
-  document.getElementById('copyBtn').onclick = () => {
-    navigator.clipboard.writeText(refLink);
-    showToast('Lien copié !');
-  };
-
-  document.getElementById('investedBtn').onclick = async () => {
-    const val = parseFloat(document.getElementById('investedInput').value);
-    const msg = document.getElementById('investedMsg');
-    if(!val || val < 500){
-      msg.innerHTML = `<div class="auth-error" style="text-align:left; margin-top:10px;">Le montant minimum accepté est 500 €.</div>`;
-      return;
-    }
-    const { error } = await supa
-      .from('profiles')
-      .update({ invested_amount: val })
-      .eq('id', profile.id);
-
-    if(error){
-      msg.innerHTML = `<div class="auth-error" style="text-align:left; margin-top:10px;">Erreur, réessaie.</div>`;
-    } else {
-      showToast('Montant mis à jour !');
-      loadDashboard();
-    }
-  };
-}
-
-function escapeHtml(str){
-  const div = document.createElement('div');
-  div.textContent = str || '';
-  return div.innerHTML;
-}
-
-logoutBtn.onclick = async () => {
-  await supa.auth.signOut();
-  logoutBtn.style.display = 'none';
-  renderAuth();
-};
-
-// ---------- INIT ----------
-(async function init(){
-  try{
-    const { data: { session }, error } = await supa.auth.getSession();
-    if(error) throw error;
-    if(session){
-      loadDashboard();
-    } else {
-      renderAuth();
-    }
-  } catch(err){
-    app.innerHTML = `<div class="loading" style="color:var(--danger); text-align:left; max-width:600px; margin:40px auto;">
-      <strong>Erreur de chargement :</strong><br><br>
-      ${escapeHtml(err.message || String(err))}
-      <br><br>
-      <span style="color:var(--muted); font-size:0.85rem;">Envoie ce message pour obtenir de l'aide.</span>
-    </div>`;
-  }
-})();
-</script>
-
-</body>
-</html>
+    <span style="color:var(--muted); font-size:0.85rem;">Vérifie ta

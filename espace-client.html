@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace Client — WK Académie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0A0D11;
+    --surface:#12171E;
+    --surface-2:#1A222B;
+    --line: rgba(237,231,218,0.10);
+    --gold:#C9A15D;
+    --gold-soft: rgba(201,161,93,0.14);
+    --emerald:#2E8B6E;
+    --emerald-soft: rgba(46,139,110,0.14);
+    --text:#EDE7DA;
+    --muted:#8B95A1;
+    --danger:#C97A6D;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before, body::after{
+    content:'';
+    position:fixed;
+    width:520px; height:520px;
+    border-radius:50%;
+    filter:blur(100px);
+    pointer-events:none;
+    z-index:0;
+  }
+  body::before{
+    background:rgba(201,161,93,0.10);
+    top:-200px; left:-160px;
+    animation: ambient-drift-a 18s ease-in-out infinite;
+  }
+  body::after{
+    background:rgba(46,139,110,0.09);
+    bottom:-220px; right:-160px;
+    animation: ambient-drift-b 20s ease-in-out infinite;
+  }
+  @keyframes ambient-drift-a{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    50%{ transform:translate(40px,30px) scale(1.1); }
+  }
+  @keyframes ambient-drift-b{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    50%{ transform:translate(-30px,-25px) scale(1.12); }
+  }
+  nav, main{ position:relative; z-index:1; }
+
+  .particle{
+    position:fixed; bottom:0;
+    border-radius:50%;
+    background:var(--gold);
+    opacity:0.4;
+    pointer-events:none;
+    z-index:0;
+    animation: particle-float linear infinite;
+  }
+  @keyframes particle-float{
+    0%{ transform:translateY(0); opacity:0; }
+    10%{ opacity:0.5; }
+    90%{ opacity:0.3; }
+    100%{ transform:translateY(-100vh); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .particle{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    body::before, body::after{ animation:none; }
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; }
+  a{ color:inherit; }
+  .wrap{ max-width:900px; margin:0 auto; padding:0 24px; }
+
+  nav{
+    border-bottom:1px solid var(--line);
+    padding:20px 0;
+  }
+  nav .wrap{ display:flex; align-items:center; justify-content:space-between; }
+  .brand{ font-family:'Fraunces', serif; font-size:1.1rem; font-weight:600; }
+  .brand span{ color:var(--gold); }
+  .btn-logout{
+    font-size:0.82rem; color:var(--muted);
+    border:1px solid var(--line);
+    padding:8px 16px; border-radius:100px;
+    cursor:pointer; background:none;
+    font-family:inherit;
+  }
+  .btn-logout:hover{ color:var(--text); border-color:var(--muted); }
+
+  main{ padding:50px 0 80px; }
+
+  /* ---- Auth screens ---- */
+  .auth-box{
+    max-width:400px;
+    margin:40px auto;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:40px 36px;
+  }
+  .auth-tabs{
+    display:flex;
+    gap:4px;
+    background:var(--surface-2);
+    padding:4px;
+    border-radius:100px;
+    margin-bottom:28px;
+  }
+  .auth-tab{
+    flex:1;
+    text-align:center;
+    padding:9px;
+    border-radius:100px;
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--muted);
+    transition:background .2s ease, color .2s ease;
+  }
+  .auth-tab.active{ background:var(--gold); color:var(--ink); }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:0.8rem; color:var(--muted); margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:0.92rem;
+  }
+  .field input:focus{ outline:none; border-color:var(--gold); }
+  .ref-note{
+    background:var(--gold-soft);
+    border:1px solid rgba(201,161,93,0.3);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:0.82rem;
+    margin-bottom:16px;
+  }
+  .ref-note strong{ color:var(--gold); }
+  .btn-primary{
+    width:100%;
+    background:var(--gold);
+    color:var(--ink);
+    border:none;
+    padding:13px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:0.92rem;
+    cursor:pointer;
+    font-family:inherit;
+    transition:opacity .2s ease;
+  }
+  .btn-primary:hover{ opacity:0.9; }
+  .btn-primary:disabled{ opacity:0.5; cursor:not-allowed; }
+  .auth-error{
+    color:var(--danger);
+    font-size:0.82rem;
+    margin-top:12px;
+    text-align:center;
+  }
+  .auth-msg{
+    color:var(--emerald);
+    font-size:0.82rem;
+    margin-top:12px;
+    text-align:center;
+  }
+
+  /* ---- Dashboard ---- */
+  .hello{ font-size:1.6rem; margin-bottom:6px; }
+  .hello span{ color:var(--gold); }
+  .sub{ color:var(--muted); font-size:0.92rem; margin-bottom:36px; }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:28px 26px;
+    margin-bottom:22px;
+  }
+  .card h3{ font-size:1.05rem; color:#FBF9F4; margin-bottom:16px; }
+
+  /* Referral link box */
+  .ref-link-box{
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .ref-link-input{
+    flex:1; min-width:200px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:0.88rem;
+  }
+  .btn-copy{
+    background:var(--gold); color:var(--ink);
+    border:none; border-radius:10px;
+    padding:0 20px;
+    font-weight:700; font-size:0.85rem;
+    cursor:pointer; font-family:inherit;
+  }
+
+  /* Level / points */
+  .level-row{
+    display:flex; align-items:center; gap:16px;
+    margin-bottom:18px;
+  }
+  .level-badge{
+    font-size:2rem;
+  }
+  .level-name{
+    font-family:'Fraunces', serif;
+    font-size:1.3rem;
+    color:#FBF9F4;
+  }
+  .level-points{
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+  .progress-track{
+    height:10px;
+    background:var(--surface-2);
+    border-radius:100px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--gold), var(--emerald));
+    border-radius:100px;
+    transition:width 1.1s cubic-bezier(.22,.9,.3,1);
+    position:relative;
+    overflow:hidden;
+  }
+  .progress-fill::after{
+    content:'';
+    position:absolute; top:0; left:-60%;
+    width:40%; height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: progress-shine 2.2s ease-in-out infinite;
+  }
+  @keyframes progress-shine{
+    0%{ left:-60%; }
+    100%{ left:130%; }
+  }
+  .progress-label{
+    margin-top:8px;
+    font-size:0.8rem;
+    color:var(--muted);
+  }
+
+  /* Rewards list */
+  /* Points wallet */
+  .points-total{
+    font-family:'Fraunces', serif;
+    font-size:2.4rem;
+    color:var(--gold);
+    display:flex; align-items:baseline; gap:8px;
+    position:relative;
+    text-shadow:0 0 24px rgba(201,161,93,0.5);
+    animation: points-glow 2.6s ease-in-out infinite;
+  }
+  @keyframes points-glow{
+    0%,100%{ text-shadow:0 0 18px rgba(201,161,93,0.35); }
+    50%{ text-shadow:0 0 34px rgba(201,161,93,0.65); }
+  }
+  .points-label{
+    font-family:'Inter', sans-serif;
+    font-size:1rem;
+    color:var(--muted);
+    font-weight:500;
+  }
+  .points-hint{
+    margin-top:10px;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+
+  .reward-row{
+    display:flex; align-items:center; gap:14px;
+    padding:16px 14px;
+    margin:0 -14px;
+    border-bottom:1px solid var(--line);
+    border-radius:12px;
+    transition:background .3s ease, box-shadow .3s ease;
+  }
+  .reward-row:last-child{ border-bottom:none; }
+  .reward-info{ flex:1; min-width:0; }
+  .reward-icon{
+    width:52px; height:52px; flex-shrink:0;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem;
+    position:relative;
+    z-index:1;
+  }
+  .reward-row.claimed .reward-icon{ background:var(--emerald-soft); }
+  .reward-row.claimable .reward-icon{ background:var(--surface-2); }
+  .reward-row.locked .reward-icon{ background:var(--surface-2); filter:grayscale(1); opacity:0.5; }
+  .reward-name{ font-weight:600; font-size:0.95rem; }
+  .reward-row.locked .reward-name{ color:var(--muted); }
+  .reward-row.claimable .reward-name{
+    background:linear-gradient(90deg, var(--gold) 0%, #FBF9F4 50%, var(--gold) 100%);
+    background-size:200% auto;
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    animation: name-shine 3s linear infinite;
+  }
+  @keyframes name-shine{
+    to{ background-position:-200% center; }
+  }
+  .reward-desc{ font-size:0.8rem; color:var(--muted); }
+  .reward-check{ margin-left:auto; color:var(--emerald); font-size:0.85rem; font-weight:600; flex-shrink:0; }
+  .reward-missing{ margin-left:auto; color:var(--muted); font-size:0.78rem; flex-shrink:0; white-space:nowrap; }
+
+  /* Anneau lumineux tournant autour de l'icône d'un cadeau accessible */
+  .reward-row.claimable .reward-icon::before{
+    content:'';
+    position:absolute; inset:-4px;
+    border-radius:50%;
+    background:conic-gradient(from 0deg, var(--gold), transparent 30%, transparent 70%, var(--emerald), var(--gold));
+    z-index:-1;
+    animation: icon-ring-spin 3s linear infinite;
+  }
+  .reward-row.claimable .reward-icon::after{
+    content:'';
+    position:absolute; inset:2px;
+    border-radius:50%;
+    background:var(--surface-2);
+    z-index:-1;
+  }
+  @keyframes icon-ring-spin{
+    to{ transform:rotate(360deg); }
+  }
+
+  /* Palier "lumineux" = accessible dès maintenant */
+  .reward-row.claimable{
+    background:rgba(201,161,93,0.08);
+    box-shadow:0 0 0 1px rgba(201,161,93,0.35), 0 0 30px -2px rgba(201,161,93,0.4);
+    animation: reward-pulse-glow 2.2s ease-in-out infinite;
+  }
+  @keyframes reward-pulse-glow{
+    0%,100%{ box-shadow:0 0 0 1px rgba(201,161,93,0.3), 0 0 18px -6px rgba(201,161,93,0.35); }
+    50%{ box-shadow:0 0 0 1px rgba(201,161,93,0.6), 0 0 34px -2px rgba(201,161,93,0.6); }
+  }
+  .claim-btn{
+    margin-left:auto;
+    flex-shrink:0;
+    background:var(--gold);
+    color:var(--ink);
+    border:none;
+    border-radius:100px;
+    padding:9px 20px;
+    font-weight:700;
+    font-size:0.82rem;
+    cursor:pointer;
+    font-family:inherit;
+    transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+  }
+  .claim-btn:hover:not(:disabled){
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px -10px rgba(201,161,93,0.6);
+  }
+  .claim-btn:disabled{ opacity:0.6; cursor:not-allowed; }
+
+  @media (prefers-reduced-motion: reduce){
+    .reward-row.claimable{ animation:none; }
+  }
+
+  @media (max-width:560px){
+    .reward-row{ flex-wrap:wrap; }
+    .claim-btn, .reward-check, .reward-missing{ margin-left:50px; }
+  }
+
+  /* Invested amount */
+  .invested-current{
+    font-family:'Fraunces', serif;
+    font-size:1.8rem;
+    color:var(--gold);
+    margin-bottom:4px;
+  }
+  .invested-note{ font-size:0.8rem; color:var(--muted); margin-bottom:18px; }
+  .invested-form{ display:flex; gap:10px; flex-wrap:wrap; }
+  .invested-form input{
+    flex:1; min-width:160px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:0.92rem;
+  }
+  .invested-form button{
+    background:var(--emerald); color:#FBF9F4;
+    border:none; border-radius:10px;
+    padding:0 22px;
+    font-weight:700; font-size:0.85rem;
+    cursor:pointer; font-family:inherit;
+  }
+  .invested-hint{ font-size:0.78rem; color:var(--muted); margin-top:8px; }
+
+  /* Referral list */
+  .filleul-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    font-size:0.9rem;
+  }
+  .filleul-row:last-child{ border-bottom:none; }
+  .filleul-points{
+    color:var(--emerald);
+    font-weight:600;
+    font-size:0.85rem;
+  }
+  .empty-state{
+    color:var(--muted);
+    font-size:0.88rem;
+    text-align:center;
+    padding:20px 0;
+  }
+
+  .loading{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--muted);
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--emerald); color:#fff;
+    padding:12px 22px; border-radius:100px;
+    font-size:0.85rem; font-weight:600;
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+    z-index:200;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+
+  /* ---- Confettis ---- */
+  .confetti-piece{
+    position:fixed;
+    top:-20px;
+    width:8px; height:14px;
+    z-index:300;
+    pointer-events:none;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall{
+    0%{ transform:translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform:translateY(100vh) rotate(720deg); opacity:0; }
+  }
+
+  /* ---- Machine à sous (révélation du cadeau) ---- */
+  .slot-overlay{
+    position:fixed; inset:0;
+    background:rgba(10,13,17,0.88);
+    backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:400;
+    opacity:0;
+    transition:opacity .25s ease;
+  }
+  .slot-overlay.show{ opacity:1; }
+  .slot-machine{
+    background:var(--surface);
+    border:1px solid rgba(201,161,93,0.4);
+    border-radius:24px;
+    padding:44px 50px;
+    text-align:center;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.6);
+    transform:scale(0.9);
+    transition:transform .25s ease;
+  }
+  .slot-overlay.show .slot-machine{ transform:scale(1); }
+  .slot-window{
+    width:110px; height:110px;
+    margin:0 auto 22px;
+    background:var(--surface-2);
+    border:2px solid var(--gold);
+    border-radius:20px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:3.2rem;
+    overflow:hidden;
+  }
+  .slot-window.spinning{
+    animation: slot-shake 0.15s linear infinite;
+  }
+  @keyframes slot-shake{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
+  }
+  .slot-title{
+    font-family:'Fraunces', serif;
+    font-size:1.4rem;
+    color:#FBF9F4;
+    margin-bottom:6px;
+  }
+  .slot-sub{
+    font-size:0.9rem;
+    color:var(--muted);
+    max-width:280px;
+  }
+  .slot-sub strong{ color:var(--gold); }
+
+  /* ---- Notification nouveau filleul ---- */
+  .referral-notify{
+    position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120%);
+    background:linear-gradient(90deg, var(--gold), var(--emerald));
+    color:var(--ink);
+    padding:14px 26px;
+    border-radius:100px;
+    font-weight:700;
+    font-size:0.88rem;
+    z-index:350;
+    box-shadow:0 12px 32px -8px rgba(201,161,93,0.5);
+    transition:transform .5s cubic-bezier(.22,.9,.3,1);
+  }
+  .referral-notify.show{ transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:560px){
+    .auth-box{ padding:30px 24px; }
+    .card{ padding:22px 18px; }
+  }
+
+  /* ---- Animations générales ---- */
+  @keyframes card-in{
+    from{ opacity:0; transform:translateY(16px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .card, .auth-box{
+    animation: card-in .55s ease both;
+  }
+  .card:nth-of-type(1){ animation-delay:.05s; }
+  .card:nth-of-type(2){ animation-delay:.15s; }
+  .card:nth-of-type(3){ animation-delay:.25s; }
+  .card:nth-of-type(4){ animation-delay:.35s; }
+  .card:nth-of-type(5){ animation-delay:.45s; }
+
+  .hello, .sub{
+    animation: card-in .5s ease both;
+  }
+
+  .card{
+    transition:transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    border-color:rgba(201,161,93,0.3);
+    box-shadow:0 16px 36px -24px rgba(201,161,93,0.35);
+  }
+
+  .btn-primary, .btn-copy, .invested-form button{
+    transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+  }
+  .btn-primary:hover:not(:disabled), .btn-copy:hover, .invested-form button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 24px -12px rgba(201,161,93,0.5);
+  }
+  .btn-primary:active:not(:disabled), .btn-copy:active, .invested-form button:active{
+    transform:translateY(0);
+  }
+
+  .level-badge{
+    display:inline-block;
+    animation: badge-pop .6s cubic-bezier(.34,1.56,.64,1) both;
+    animation-delay:.3s;
+  }
+  @keyframes badge-pop{
+    from{ transform:scale(0.4); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+
+  .field input, .invested-form input{
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .field input:focus, .invested-form input:focus{
+    outline:none;
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,161,93,0.15);
+  }
+
+  .auth-tab{ transition:background .25s ease, color .25s ease; }
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .auth-box, .hello, .sub, .level-badge{ animation:none !important; }
+    .progress-fill::after{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="particle" style="left:8%; width:5px; height:5px; animation-duration:11s; animation-delay:0s;"></div>
+<div class="particle" style="left:22%; width:3px; height:3px; animation-duration:14s; animation-delay:3s;"></div>
+<div class="particle" style="left:38%; width:4px; height:4px; animation-duration:9s; animation-delay:1s;"></div>
+<div class="particle" style="left:55%; width:6px; height:6px; animation-duration:13s; animation-delay:5s;"></div>
+<div class="particle" style="left:70%; width:3px; height:3px; animation-duration:10s; animation-delay:2s;"></div>
+<div class="particle" style="left:85%; width:5px; height:5px; animation-duration:12s; animation-delay:4s;"></div>
+<div class="particle" style="left:93%; width:4px; height:4px; animation-duration:15s; animation-delay:6s;"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">WK <span>Académie</span> — Espace parrainage</div>
+    <button class="btn-logout" id="logoutBtn" style="display:none;">Se déconnecter</button>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap" id="app">
+    <div class="loading">Chargement…</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://yvsddohdmkttbriguagi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_bxEPsHgetf2E7-14l1t6Fw_ljWbjLkc';
+
+let supa;
+try{
+  supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch(err){
+  document.getElementById('app').innerHTML = `<div class="loading" style="color:var(--danger); text-align:left; max-width:600px; margin:40px auto;">
+    <strong>Erreur : la librairie Supabase ne s'est pas chargée.</strong><br><br>
+    ${err.message || String(err)}
+    <br><br>
+    <span style="color:var(--muted); font-size:0.85rem;">Vérifie ta connexion et recharge la page. Si ça persiste, envoie ce message.</span>
+  </div>`;
+  throw err;
+}
+
+const LEVELS = [
+  { name: 'Bronze', icon: '🎧', points: 30, reward: 'AirPods' },
+  { name: 'Argent', icon: '✈️', points: 60, reward: 'Week-end tout frais payés pour 2, destination surprise' },
+  { name: 'Or', icon: '📱', points: 90, reward: 'iPhone dernier modèle' },
+  { name: 'Platine', icon: '💰', points: 130, reward: '2 000 € cash' },
+  { name: 'Diamant', icon: '🌴', points: 250, reward: 'Voyage tout frais payés pour 2' },
+  { name: 'Légende', icon: '⌚', points: 400, reward: 'Rolex + statut Ambassadeur officiel WK' }
+];
+
+const app = document.getElementById('app');
+const logoutBtn = document.getElementById('logoutBtn');
+const toastEl = document.getElementById('toast');
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+function getRefCodeFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get('ref');
+}
+
+function getReferralLink(code){
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('ref', code);
+  return url.toString();
+}
+
+function currentLevel(points){
+  let level = null;
+  for(const l of LEVELS){
+    if(points >= l.points) level = l;
+  }
+  return level;
+}
+
+function nextLevel(points){
+  return LEVELS.find(l => points < l.points) || null;
+}
+
+// ---------- AUTH SCREEN ----------
+function renderAuth(){
+  const refCode = getRefCodeFromURL();
+  app.innerHTML = `
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Connexion</div>
+        <div class="auth-tab" data-tab="signup">Créer un compte</div>
+      </div>
+      ${refCode ? `<div class="ref-note" id="refNote">🎁 Tu as été invité avec le code <strong>${refCode}</strong>. Il sera appliqué à ton inscription.</div>` : ''}
+      <div id="authForm"></div>
+    </div>
+  `;
+
+  const tabs = app.querySelectorAll('.auth-tab');
+  let mode = 'login';
+
+  function renderForm(){
+    const refNote = document.getElementById('refNote');
+    if(refNote) refNote.style.display = mode === 'signup' ? 'block' : 'none';
+
+    const formEl = document.getElementById('authForm');
+    if(mode === 'login'){
+      formEl.innerHTML = `
+        <div class="field"><label>Email</label><input type="email" id="loginEmail" /></div>
+        <div class="field"><label>Mot de passe</label><input type="password" id="loginPassword" /></div>
+        <button class="btn-primary" id="loginBtn">Se connecter</button>
+        <div id="authMsg"></div>
+      `;
+      document.getElementById('loginBtn').onclick = handleLogin;
+    } else {
+      formEl.innerHTML = `
+        <div class="field"><label>Nom complet</label><input type="text" id="signupName" /></div>
+        <div class="field"><label>Email</label><input type="email" id="signupEmail" /></div>
+        <div class="field"><label>Mot de passe (6 caractères min.)</label><input type="password" id="signupPassword" /></div>
+        <button class="btn-primary" id="signupBtn">Créer mon compte</button>
+        <div id="authMsg"></div>
+      `;
+      document.getElementById('signupBtn').onclick = handleSignup;
+    }
+  }
+
+  tabs.forEach(tab => {
+    tab.onclick = () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      mode = tab.dataset.tab;
+      renderForm();
+    };
+  });
+
+  renderForm();
+}
+
+async function handleLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const msg = document.getElementById('authMsg');
+  btn.disabled = true;
+  msg.innerHTML = '';
+
+  const { error } = await supa.auth.signInWithPassword({ email, password });
+  if(error){
+    msg.innerHTML = `<div class="auth-error">${translateError(error.message)}</div>`;
+    btn.disabled = false;
+  } else {
+    loadDashboard();
+  }
+}
+
+async function handleSignup(){
+  const full_name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const btn = document.getElementById('signupBtn');
+  const msg = document.getElementById('authMsg');
+  const refCode = getRefCodeFromURL();
+
+  if(!full_name || !email || password.length < 6){
+    msg.innerHTML = `<div class="auth-error">Merci de remplir tous les champs (mot de passe 6 caractères min.)</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  msg.innerHTML = '';
+
+  const { error } = await supa.auth.signUp({
+    email, password,
+    options: {
+      data: { full_name, referred_by_code: refCode || null }
+    }
+  });
+
+  if(error){
+    msg.innerHTML = `<div class="auth-error">${translateError(error.message)}</div>`;
+    btn.disabled = false;
+  } else {
+    msg.innerHTML = `<div class="auth-msg">Compte créé ! Tu peux maintenant te connecter.</div>`;
+    btn.disabled = false;
+  }
+}
+
+function translateError(msg){
+  if(msg.includes('Invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if(msg.includes('already registered')) return 'Un compte existe déjà avec cet email.';
+  if(msg.includes('Password should be')) return 'Le mot de passe doit faire au moins 6 caractères.';
+  return msg;
+}
+
+// ---------- DASHBOARD ----------
+async function loadDashboard(){
+  app.innerHTML = `<div class="loading">Chargement de ton espace…</div>`;
+  logoutBtn.style.display = 'inline-block';
+
+  const { data: { user } } = await supa.auth.getUser();
+  if(!user){ renderAuth(); logoutBtn.style.display = 'none'; return; }
+
+  const { data: profile, error: profileErr } = await supa
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if(profileErr || !profile){
+    app.innerHTML = `<div class="loading">Erreur de chargement du profil. Réessaie de te reconnecter.</div>`;
+    return;
+  }
+
+  const { data: pointsRow } = await supa
+    .from('available_points')
+    .select('available_points')
+    .eq('user_id', user.id)
+    .single();
+  const points = pointsRow?.available_points ?? 0;
+
+  const { data: redemptions } = await supa
+    .from('reward_redemptions')
+    .select('level_name')
+    .eq('user_id', user.id);
+  const claimedLevels = new Set((redemptions || []).map(r => r.level_name));
+
+  const { data: filleuls } = await supa
+    .from('profiles')
+    .select('full_name, invested_amount, created_at')
+    .eq('referred_by', user.id)
+    .order('created_at', { ascending: false });
+
+  renderDashboard(profile, points, filleuls || [], claimedLevels);
+  subscribeToNewReferrals(user.id);
+}
+
+function pointsForAmount(amount){
+  if(amount >= 5000) return 50;
+  if(amount >= 2500) return 30;
+  if(amount >= 1000) return 20;
+  if(amount >= 500) return 10;
+  return 0;
+}
+
+function renderDashboard(profile, points, filleuls, claimedLevels){
+  const refLink = getReferralLink(profile.referral_code);
+
+  app.innerHTML = `
+    <h2 class="hello">Bonjour <span>${escapeHtml(profile.full_name)}</span> 👋</h2>
+    <p class="sub">Voici ton espace de parrainage WK Académie.</p>
+
+    <div class="card">
+      <h3>Ton lien de parrainage</h3>
+      <div class="ref-link-box">
+        <input class="ref-link-input" id="refLinkInput" readonly value="${refLink}" />
+        <button class="btn-copy" id="copyBtn">Copier</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Tes points disponibles</h3>
+      <div class="points-total"><span id="pointsCounter">0</span> <span class="points-label">points</span></div>
+      <p class="points-hint">Utilise-les pour réclamer un cadeau ci-dessous, ou patiente pour en accumuler plus et viser un cadeau plus gros.</p>
+    </div>
+
+    <div class="card">
+      <h3>Cadeaux disponibles</h3>
+      ${LEVELS.map(l => {
+        const claimed = claimedLevels.has(l.name);
+        const claimable = !claimed && points >= l.points;
+        const locked = !claimed && points < l.points;
+        const rowClass = claimed ? 'claimed' : (claimable ? 'claimable' : 'locked');
+        return `
+        <div class="reward-row ${rowClass}" ${claimable ? `data-level="${l.name}" data-points="${l.points}"` : ''}>
+          <div class="reward-icon">${l.icon}</div>
+          <div class="reward-info">
+            <div class="reward-name">${l.name} — ${l.points} points</div>
+            <div class="reward-desc">${l.reward}</div>
+          </div>
+          ${claimed
+            ? '<div class="reward-check">Réclamé ✓</div>'
+            : claimable
+              ? '<button class="claim-btn">Réclamer</button>'
+              : `<div class="reward-missing">${l.points - points} pts manquants</div>`
+          }
+        </div>
+      `;}).join('')}
+    </div>
+
+    <div class="card">
+      <h3>Ton montant investi</h3>
+      <div class="invested-current">${profile.invested_amount > 0 ? profile.invested_amount.toLocaleString('fr-FR') + ' €' : 'Non renseigné'}</div>
+      <div class="invested-note">Montant obligatoire. Minimum 500 €.</div>
+      <div class="invested-form">
+        <input type="number" id="investedInput" min="500" step="50" placeholder="Ex: 1000" />
+        <button id="investedBtn">Mettre à jour</button>
+      </div>
+      <div id="investedMsg"></div>
+    </div>
+
+    <div class="card">
+      <h3>Tes filleuls (${filleuls.length})</h3>
+      ${filleuls.length === 0
+        ? "<div class=\"empty-state\">Personne parrainé pour l'instant. Partage ton lien pour commencer à gagner des points !</div>"
+        : filleuls.map(f => `
+          <div class="filleul-row">
+            <span>${escapeHtml(f.full_name)}</span>
+            <span class="filleul-points">${f.invested_amount > 0 ? '+' + pointsForAmount(f.invested_amount) + ' pts' : 'En attente'}</span>
+          </div>
+        `).join('')
+      }
+    </div>
+  `;
+
+  // Animation du compteur de points et de la barre de progression
+  requestAnimationFrame(() => {
+    const counterEl = document.getElementById('pointsCounter');
+    if(counterEl){
+      const duration = 900;
+      const startTime = performance.now();
+      function tick(now){
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        counterEl.textContent = Math.round(eased * points);
+        if(t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+  });
+
+  document.querySelectorAll('.claim-btn').forEach(btn => {
+    btn.onclick = async (e) => {
+      const row = e.target.closest('.reward-row');
+      const levelName = row.dataset.level;
+      const levelPoints = parseInt(row.dataset.points, 10);
+      const levelInfo = LEVELS.find(l => l.name === levelName);
+
+      const confirmed = confirm(
+        `Réclamer le cadeau "${levelName}" pour ${levelPoints} points ?\n\n${levelInfo.reward}\n\nCes points seront définitivement utilisés.`
+      );
+      if(!confirmed) return;
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      const { data: { user } } = await supa.auth.getUser();
+      const { error } = await supa
+        .from('reward_redemptions')
+        .insert({ user_id: user.id, level_name: levelName, points_spent: levelPoints });
+
+      if(error){
+        showToast('Erreur, réessaie.');
+        btn.disabled = false;
+        btn.textContent = 'Réclamer';
+      } else {
+        await playSlotReveal(levelInfo);
+        launchConfetti();
+        loadDashboard();
+      }
+    };
+  });
+
+  document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(refLink);
+    showToast('Lien copié !');
+  };
+
+  document.getElementById('investedBtn').onclick = async () => {
+    const val = parseFloat(document.getElementById('investedInput').value);
+    const msg = document.getElementById('investedMsg');
+    if(!val || val < 500){
+      msg.innerHTML = `<div class="auth-error" style="text-align:left; margin-top:10px;">Le montant minimum accepté est 500 €.</div>`;
+      return;
+    }
+    const { error } = await supa
+      .from('profiles')
+      .update({ invested_amount: val })
+      .eq('id', profile.id);
+
+    if(error){
+      msg.innerHTML = `<div class="auth-error" style="text-align:left; margin-top:10px;">Erreur, réessaie.</div>`;
+    } else {
+      showToast('Montant mis à jour !');
+      loadDashboard();
+    }
+  };
+}
+
+// ---------- Confettis ----------
+function launchConfetti(){
+  const colors = ['#C9A15D', '#2E8B6E', '#FBF9F4', '#EDE7DA'];
+  for(let i = 0; i < 70; i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    piece.style.animationDelay = (Math.random() * 0.4) + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+// ---------- Machine à sous (révélation du cadeau) ----------
+function playSlotReveal(levelInfo){
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'slot-overlay';
+    overlay.innerHTML = `
+      <div class="slot-machine">
+        <div class="slot-window spinning" id="slotWindow">🎲</div>
+        <div class="slot-title">Tirage en cours…</div>
+        <div class="slot-sub">Ton cadeau arrive…</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    const slotWindow = overlay.querySelector('#slotWindow');
+    const spinIcons = ['🎁', '🎲', '⭐', '💫', '🎉'];
+    let spinCount = 0;
+    const spinInterval = setInterval(() => {
+      slotWindow.textContent = spinIcons[spinCount % spinIcons.length];
+      spinCount++;
+    }, 90);
+
+    setTimeout(() => {
+      clearInterval(spinInterval);
+      slotWindow.classList.remove('spinning');
+      slotWindow.textContent = levelInfo.icon;
+      overlay.querySelector('.slot-title').textContent = `Bravo, tu as gagné !`;
+      overlay.querySelector('.slot-sub').innerHTML = `<strong>${escapeHtml(levelInfo.reward)}</strong>`;
+
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        setTimeout(() => { overlay.remove(); resolve(); }, 300);
+      }, 1800);
+    }, 1400);
+  });
+}
+
+// ---------- Notification en direct : nouveau filleul ----------
+function showReferralNotify(name){
+  const notify = document.createElement('div');
+  notify.className = 'referral-notify';
+  notify.textContent = `🎉 ${name} vient de rejoindre grâce à toi !`;
+  document.body.appendChild(notify);
+  requestAnimationFrame(() => notify.classList.add('show'));
+  setTimeout(() => {
+    notify.classList.remove('show');
+    setTimeout(() => notify.remove(), 500);
+  }, 4000);
+}
+
+let realtimeChannel = null;
+function subscribeToNewReferrals(userId){
+  if(realtimeChannel) supa.removeChannel(realtimeChannel);
+  realtimeChannel = supa
+    .channel('new-referrals-' + userId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'profiles',
+      filter: `referred_by=eq.${userId}`
+    }, (payload) => {
+      showReferralNotify(payload.new.full_name || 'Un nouveau membre');
+    })
+    .subscribe();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+logoutBtn.onclick = async () => {
+  await supa.auth.signOut();
+  logoutBtn.style.display = 'none';
+  renderAuth();
+};
+
+// ---------- INIT ----------
+(async function init(){
+  try{
+    const { data: { session }, error } = await supa.auth.getSession();
+    if(error) throw error;
+    if(session){
+      loadDashboard();
+    } else {
+      renderAuth();
+    }
+  } catch(err){
+    app.innerHTML = `<div class="loading" style="color:var(--danger); text-align:left; max-width:600px; margin:40px auto;">
+      <strong>Erreur de chargement :</strong><br><br>
+      ${escapeHtml(err.message || String(err))}
+      <br><br>
+      <span style="color:var(--muted); font-size:0.85rem;">Envoie ce message pour obtenir de l'aide.</span>
+    </div>`;
+  }
+})();
+</script>
+
+</body>
+</html>

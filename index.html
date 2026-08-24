@@ -315,12 +315,24 @@
 <script>
 const SUPABASE_URL = 'https://yvsddohdmkttbriguagi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bxEPsHgetf2E7-14l1t6Fw_ljWbjLkc';
-const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let supa;
+try{
+  supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch(err){
+  document.getElementById('app').innerHTML = `<div class="loading" style="color:var(--danger); text-align:left; max-width:600px; margin:40px auto;">
+    <strong>Erreur : la librairie Supabase ne s'est pas chargée.</strong><br><br>
+    ${err.message || String(err)}
+    <br><br>
+    <span style="color:var(--muted); font-size:0.85rem;">Vérifie ta connexion et recharge la page. Si ça persiste, envoie ce message.</span>
+  </div>`;
+  throw err;
+}
 
 const LEVELS = [
   { name: 'Bronze', icon: '🥉', points: 10, reward: 'Badge Bronze + accès au canal "Parrains"' },
   { name: 'Argent', icon: '🥈', points: 30, reward: '-25% sur ton abonnement du mois suivant' },
-  { name: 'Or', icon: '🥇', points: 60, reward: '1 mois d\\'abonnement offert' },
+  { name: 'Or', icon: '🥇', points: 60, reward: "1 mois d'abonnement offert" },
   { name: 'Platine', icon: '💎', points: 120, reward: '2 mois offerts + appel privé stratégie' },
   { name: 'Légende', icon: '👑', points: 250, reward: 'Abonnement à vie + statut Ambassadeur WK' }
 ];
@@ -578,7 +590,7 @@ function renderDashboard(profile, points, filleuls){
     <div class="card">
       <h3>Tes filleuls (${filleuls.length})</h3>
       ${filleuls.length === 0
-        ? '<div class="empty-state">Personne parrainé pour l\\'instant. Partage ton lien pour commencer à gagner des points !</div>'
+        ? "<div class=\"empty-state\">Personne parrainé pour l'instant. Partage ton lien pour commencer à gagner des points !</div>"
         : filleuls.map(f => `
           <div class="filleul-row">
             <span>${escapeHtml(f.full_name)}</span>
@@ -629,11 +641,21 @@ logoutBtn.onclick = async () => {
 
 // ---------- INIT ----------
 (async function init(){
-  const { data: { session } } = await supa.auth.getSession();
-  if(session){
-    loadDashboard();
-  } else {
-    renderAuth();
+  try{
+    const { data: { session }, error } = await supa.auth.getSession();
+    if(error) throw error;
+    if(session){
+      loadDashboard();
+    } else {
+      renderAuth();
+    }
+  } catch(err){
+    app.innerHTML = `<div class="loading" style="color:var(--danger); text-align:left; max-width:600px; margin:40px auto;">
+      <strong>Erreur de chargement :</strong><br><br>
+      ${escapeHtml(err.message || String(err))}
+      <br><br>
+      <span style="color:var(--muted); font-size:0.85rem;">Envoie ce message pour obtenir de l'aide.</span>
+    </div>`;
   }
 })();
 </script>
